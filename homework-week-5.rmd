@@ -1,0 +1,249 @@
+---
+title: "homework-week-5"
+author: "Nitin Verma"
+date: "October 6, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Homework (Week 5) Due on October 6th 2016
+##Load in the dataset
+```{r}
+f <- file.choose()
+d <- read.csv(f, sep = ",", header = TRUE)
+attach(d)
+
+pop_mean <- function(x) {
+  return (sum(x)/length(x))
+}
+
+pop_sd <- function(x) {
+  pop_mn <- pop_mean(x)
+  return (sqrt(sum((x - pop_mn)^2)/length(x)))
+}
+```
+
+##Problem 1
+Calculate the *population* mean and standard deviation for each quantitative random variable (height, weight, age, number of zombies killed, and years of education). NOTE: You will not want to use the built in `var()` and `sd()` commands as these are for *samples*.
+```{r}
+pop.mean.height <- pop_mean(height)
+pop.sd.height <- pop_sd(height)
+pop.mean.weight <- pop_mean(weight)
+pop.sd.weight <- pop_sd(weight)
+pop.mean.age <- pop_mean(age)
+pop.sd.age <- pop_sd(age)
+pop.mean.zkilled <- pop_mean(zombies_killed)
+pop.sd.zkilled <- pop_sd(zombies_killed)
+pop.mean.yearsEd <- pop_mean(years_of_education)
+pop.sd.yearsEd <- pop_sd(years_of_education)
+```
+```{r}
+pop.mean.height
+pop.sd.height
+pop.mean.weight
+pop.sd.weight
+pop.mean.age
+pop.sd.age
+pop.mean.zkilled
+pop.sd.zkilled
+pop.mean.yearsEd
+pop.sd.yearsEd
+```
+
+##Problem 2
+Use ggplot and make boxplots of each of these variable by gender.
+```{r}
+library(ggplot2)
+ggplot(d, aes(x=gender, y=height)) + geom_boxplot() + ggtitle("Height")
+ggplot(d, aes(x=gender, y=weight)) + geom_boxplot() + ggtitle("Weight")
+ggplot(d, aes(x=gender, y=age)) + geom_boxplot() + ggtitle("Age")
+ggplot(d, aes(x=gender, y=zombies_killed)) + geom_boxplot() + ggtitle("Zombies Killed")
+ggplot(d, aes(x=gender, y=years_of_education)) + geom_boxplot() + ggtitle("Years of Education")
+```
+
+##Problem 3
+Use ggplot and make a scatterplots of height and weight in relation to age. Do these variables seem to be related? In what way?
+```{r}
+ggplot(d, aes(x=age, y=height)) + geom_point(colour = "blue", size = 1) + ggtitle("Height vs Age")
+ggplot(d, aes(x=age, y=weight)) + geom_point(colour = "red", size = 1) + ggtitle("Weight vs Age")
+```
+  
+It seems that height is *somewhat* linearly related to age. But there does not appear to be a noteworthy relation between weight and age.
+
+##Problem 4
+Using histograms and Q-Q plots, check whether the quantitative variables seem to be drawn from a normal distribution. Which seem to be and which do not (hint: not all are drawn from the normal distribution)? For those that are not, can you determine what common distribution they are drawn from?
+```{r}
+qqnorm(height, main="Normal QQ Plot for Height")
+hist(height, main = "Histogram of Heights")
+
+qqnorm(weight, main="Normal QQ Plot for Weight")
+hist(weight, main = "Histogram of Weights")
+
+qqnorm(age, main="Normal QQ Plot for Age")
+hist(age, main = "Histogram of Age")
+
+qqnorm(zombies_killed, main="Normal QQ Plot for No. of Zombies killed")
+hist(zombies_killed, main = "Histogram of No. of Zombies killed")
+
+qqnorm(years_of_education, main="Normal QQ Plot for Years of Education")
+hist(years_of_education, main = "Histogram of Years of Education")
+```
+  
+*zombies_killed*, and *years_of_education* clearly do not belong to the normal distribution.
+
+### zombies_killed
+Looking at the histogram, it seems that this *might* be a Poisson distribution. Assuming lambda equal to arithmetic mean of zombies_killed,
+```{r}
+l <- mean(zombies_killed)
+theoretical_q <- qpois(ppoints(length(zombies_killed)), lambda = mean(zombies_killed))
+observed_q <- quantile(zombies_killed, ppoints(zombies_killed))
+plot(theoretical_q, observed_q, main = "Poisson based Q-Q Plot for Zombies Killed")
+```
+  
+This looks like a linear plot, and therefore, the variable zombies_killed appears to belong to a Poisson distribution.
+
+### years_of_education
+Now let's look at years of education. Again, let's assume lambda to be the arithmetic mean of no. of years of education.
+```{r}
+l <- mean(years_of_education)
+theoretical_q <- qpois(ppoints(length(years_of_education)), lambda = l)
+observed_q <- quantile(years_of_education, ppoints(years_of_education))
+plot(theoretical_q, observed_q, main = "Poisson based Q-Q Plot for years of education")
+```
+  
+This too likes like a linear plot with some measure of dispersion. So we *fail to reject* the hypothesis that this is a Poisson distribution. Therefore, for the purpose of this assignment, it can be assumed that this is a Poisson distribution.
+
+##Problem 5
+Now use the `sample()` function to sample ONE subset of 30 zombies (without replacement) from this population and calculate the mean and sample standard deviation for each variable. Also estimate the standard error for each variable and construct the 95% confidence interval for each mean. Note that for the variables that are not drawn from the normal distribution, you will need to base your estimate of the CIs on some different distribution.
+```{r}
+sample_1 <- d[sample(id, size = 30, replace = FALSE),]
+sample_1
+s1.mean.height <- mean(sample_1$height)
+s1.sd.height <- sd(sample_1$height)
+s1.est.err.height <- pop.sd.height/sqrt(30)
+s1.ci.upper <- s1.mean.height + qnorm(0.975, mean = 0, sd = 1) * s1.est.err.height
+s1.ci.lower <- s1.mean.height + qnorm(0.025, mean = 0, sd = 1) * s1.est.err.height
+s1.ci.height <- c(s1.ci.lower, s1.ci.upper)
+
+s1.mean.weight <- mean(sample_1$weight)
+s1.sd.weight <- sd(sample_1$weight)
+s1.est.err.weight <- pop.sd.weight/sqrt(30)
+s1.ci.upper <- s1.mean.weight + qnorm(0.975, mean = 0, sd = 1) * s1.est.err.weight
+s1.ci.lower <- s1.mean.weight + qnorm(0.025, mean = 0, sd = 1) * s1.est.err.weight
+s1.ci.weight <- c(s1.ci.lower, s1.ci.upper)
+
+s1.mean.age <- mean(sample_1$age)
+s1.sd.age <- sd(sample_1$age)
+s1.est.err.age <- pop.sd.age/sqrt(30)
+s1.ci.upper <- s1.mean.age + qnorm(0.975, mean = 0, sd = 1) * s1.est.err.age
+s1.ci.lower <- s1.mean.age + qnorm(0.025, mean = 0, sd = 1) * s1.est.err.age
+s1.ci.age <- c(s1.ci.lower, s1.ci.upper)
+
+s1.mean.zkilled <- mean(sample_1$zombies_killed)
+s1.sd.zkilled <- sd(sample_1$zombies_killed)
+s1.est.err.zkilled <- sqrt(s1.mean.zkilled/length(sample_1$zombies_killed)) #poisson
+set <- NULL
+n <- 30
+for (i in 1:10000) { set[i] <- mean(sample(sample_1$zombies_killed, n, replace = TRUE))}
+s1.ci.zkilled <- quantile(set, c(0.025, 0.975))
+
+s1.mean.yearsEd <- mean(sample_1$years_of_education)
+s1.sd.yearsEd <- sd(sample_1$years_of_education)
+s1.est.err.yearsEd <- sqrt(s1.mean.yearsEd/length(sample_1$years_of_education)) #poisson
+for (i in 1:10000) { set[i] <- mean(sample(sample_1$years_of_education, n, replace = TRUE))}
+s1.ci.yearsEd <- quantile(set, c(0.025, 0.975))
+
+s1.mean.height
+s1.sd.height
+s1.est.err.height
+s1.ci.height
+
+s1.mean.weight
+s1.sd.weight
+s1.est.err.weight
+s1.ci.weight
+
+s1.mean.age
+s1.sd.age
+s1.est.err.age
+s1.ci.age
+
+s1.mean.zkilled
+s1.sd.zkilled
+s1.est.err.zkilled
+s1.ci.zkilled
+
+s1.mean.yearsEd
+s1.sd.yearsEd
+s1.est.err.yearsEd
+s1.ci.yearsEd
+```
+
+##Problem 6
+Now drawn 99 more random samples of 30 zombies out and calculate the mean for each of the these samples. Together with the first sample you drew out, you now have a set of 100 means for each variable (each based on 30 observations), which constitutes a sampling distribution for each variable. What are the means and standard deviations of this distribution for each variable? How do the standard deviations compare to the standard errors estimated in [5]? What do these sampling distributions look like? Are they normally distributed? What about for those variables that you concluded were not originally drawn from a normal distribution?
+
+```{r}
+samples <- NULL
+for (i in 1:99) {
+  samples[[i]] <- d[sample(id, size = 30, replace = FALSE),]
+}
+samples[[100]] <- sample_1
+
+mean_df <- data.frame(height=0, weight=0, age=0, zkilled=0, yearsEd=0)
+
+for (i in 1:100) {
+  mean_df[i, 1] <- mean(samples[[i]]$height)
+  mean_df[i, 2] <- mean(samples[[i]]$weight)
+  mean_df[i, 3] <- mean(samples[[i]]$age)
+  mean_df[i, 4] <- mean(samples[[i]]$zombies_killed)
+  mean_df[i, 5] <- mean(samples[[i]]$years_of_education)
+  
+}
+
+mean.height <- sum(mean_df$height) / length(mean_df$height)
+sd.height <- sqrt(sum((mean_df$height - mean.height)^2) / length(mean_df$height))
+
+mean.weight <- sum(mean_df$weight) / length(mean_df$weight)
+sd.weight <- sqrt(sum((mean_df$weight - mean.weight)^2) / length(mean_df$weight))
+
+mean.age <- sum(mean_df$age) / length(mean_df$age)
+sd.age <- sqrt(sum((mean_df$age - mean.age)^2) / length(mean_df$age))
+
+mean.zkilled <- sum(mean_df$zkilled) / length(mean_df$zkilled)
+sd.zkilled <- sqrt(sum((mean_df$zkilled - mean.zkilled)^2) / length(mean_df$zkilled))
+
+mean.yearsEd <- sum(mean_df$yearsEd) / length(mean_df$yearsEd)
+sd.yearsEd <- sqrt(sum((mean_df$yearsEd - mean.yearsEd)^2) / length(mean_df$yearsEd))
+
+mean.height
+sd.height
+mean.weight
+sd.weight
+mean.age
+sd.age
+mean.zkilled
+sd.zkilled
+mean.yearsEd
+sd.yearsEd
+
+hist(mean_df$height, main = "Histogram of Mean Heights in 100 samples")
+qqnorm(mean_df$height, main = "Normal Q-Q Plot for Sampling Distribution of Heights")
+qqline(mean_df$height, col='gray')
+hist(mean_df$weight, main = "Histogram of Mean Weights in 100 samples")
+qqnorm(mean_df$weight, main = "Normal Q-Q Plot for Sampling Distribution of Weights")
+qqline(mean_df$weight, col='gray')
+hist(mean_df$age, main = "Histogram of Mean Ages in 100 samples")
+qqnorm(mean_df$age, main = "Normal Q-Q Plot for Sampling Distribution of Ages")
+qqline(mean_df$age, col='gray')
+hist(mean_df$zkilled, main = "Histogram of Mean Zombies Killed in 100 samples")
+qqnorm(mean_df$zkilled, main = "Normal Q-Q Plot for Sampling Distribution of Zombies Killed")
+qqline(mean_df$zkilled, col='gray')
+hist(mean_df$yearsEd, main = "Histogram of Mean Years of Education in 100 samples")
+qqnorm(mean_df$yearsEd, main = "Normal Q-Q Plot for Sampling Distribution of Years of Education")
+qqline(mean_df$yearsEd, col='gray')
+```
+  
+According to the Q-Q plots above, all the sampling distributions (whether or not the original samples were from normally distributed populations) appear to be normally distributed!
